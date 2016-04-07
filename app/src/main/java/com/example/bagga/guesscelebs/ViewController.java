@@ -6,8 +6,10 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,12 +25,14 @@ public class ViewController extends AppCompatActivity {
 
     ArrayList<String> name = new ArrayList<String>();
     ArrayList<String> imagePath = new ArrayList<String>();
+    int locationOfCorrectAnswer = 0;
+    String[] correctAnswer = new String[4];
     int randomImage = 0;
     ImageView imageView;
-//    Button bb = (Button)findViewById(R.id.button);
-//    Button b1 = (Button)findViewById(R.id.button1);
-//    Button b2 = (Button)findViewById(R.id.button2);
-//    Button b3 = (Button)findViewById(R.id.button3);
+    Button bb ;
+    Button b1 ;
+    Button b2 ;
+    Button b3 ;
     URL url = null;
     HttpURLConnection connection = null;
 
@@ -83,7 +87,11 @@ public class ViewController extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_controller);
         imageView = (ImageView) findViewById(R.id.celeb);
+       bb = (Button)findViewById(R.id.button);
         Service downloadTask = new Service();
+        b1 = (Button)findViewById(R.id.button1);
+        b2 = (Button)findViewById(R.id.button2);
+        b3 = (Button)findViewById(R.id.button3);
         String result = "";
         try {
             result = downloadTask.execute("http://www.posh24.com/celebrities").get();
@@ -99,22 +107,59 @@ public class ViewController extends AppCompatActivity {
             while (m.find()) {
                 //Celeb Names
                 name.add(m.group(1));
-                Result();
+
             }
-            Random random = new Random();
-            randomImage = random.nextInt(imagePath.size());
-            DownloadImage imageDownloader = new DownloadImage();
-            Bitmap celebImage;
-            celebImage = imageDownloader.execute(imagePath.get(randomImage)).get();
-            imageView.setImageBitmap(celebImage);
+
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
+        setResult();
+
 
     }
-    public void Result(){
+    public void onButtonPressed(View view){
+        if (view.getTag().toString().equals(Integer.toString(locationOfCorrectAnswer))){
+            Toast.makeText(getApplicationContext(),"Correct",Toast.LENGTH_SHORT).show();
+            setResult();
+        }else{
+            Toast.makeText(getApplicationContext(),"Wrong!! It was "+name.get(randomImage),Toast.LENGTH_SHORT).show();
+            setResult();
+        }
+    }
+
+    public void setResult(){
+        Random random = new Random();
+        randomImage = random.nextInt(imagePath.size());
+        DownloadImage imageDownloader = new DownloadImage();
+        Bitmap celebImage;
+        try{
+            celebImage = imageDownloader.execute(imagePath.get(randomImage)).get();
+            imageView.setImageBitmap(celebImage);
+            locationOfCorrectAnswer = random.nextInt(4);
+            int incorrectAnswer = 0;
+            for(int i =0; i<4;i++){
+                if (i == locationOfCorrectAnswer){
+                    correctAnswer[i] = name.get(randomImage);
+                }else{
+                    incorrectAnswer = random.nextInt(imagePath.size());
+                    while (incorrectAnswer == randomImage){
+                        incorrectAnswer = random.nextInt(imagePath.size());
+                    }
+                    correctAnswer[i] = name.get(incorrectAnswer);
+                }
+
+            }
+            bb.setText(correctAnswer[0]);
+            b1.setText(correctAnswer[1]);
+            b2.setText(correctAnswer[2]);
+            b3.setText(correctAnswer[3]);
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
 
     }
 }
